@@ -63,7 +63,7 @@ public GuardState<CastError> CastAbility(AbilityId id, Transform target)
 public Result<Sprite, LoadError> LoadCachedSprite(string path)
 {
     var sprite = AssetDatabase.LoadAssetAtPath<Sprite>(path);
-    return Expect(sprite, LoadError.AssetMissing).ToResult(sprite);
+    return Expect(sprite, LoadError.AssetMissing).Then(sprite);
 }
 ```
 
@@ -105,7 +105,7 @@ Inverts the *whole accumulated chain's* success/failure, not just the last check
 ### `.OnSuccess(Action)` / `.OnFailure(Action<TError>)`
 Consumes the result with a reaction. **Always prefer method groups over lambdas here** (`.OnSuccess(ApplyCast)` not `.OnSuccess(() => ApplyCast(x, y))`) — a lambda that captures locals allocates a closure on the heap, which defeats the entire point of `GuardState` being a `ref struct`. If you need per-call state, store it in fields on the containing object instead.
 
-### `.Then<T>(value)` / `.Then<T>(Func<T>)` / `.ToResult()` / `.ToResult<T>(value)`
+### `.Then<T>(value)` / `.Then<T>(Func<T>)`
 Promotes a `GuardState<TError>` into a `Result<T, TError>` once you actually need a value to leave the current scope.
 
 ### `Result<TValue, TError>`
@@ -130,7 +130,7 @@ GuardCore is not trying to replace these libraries for backend work — for a we
 
 Difference and Limitations
 ---
-`GuardState<TError>` is a `ref struct`. It cannot be stored in a field, boxed, captured in a closure, or held live across an `await` point. In practice this is rarely a real restriction — build and consume the chain in one statement (`Expect(...).And(...).OnFailure(...)`), and it works fine inside `async` methods, Unity coroutines, and anywhere else, as long as you don't try to stash a half-finished chain and resume it later. If you need to defer a decision across an async boundary, call `.ToResult()` first and carry the (heap-friendly) `Result<T, TError>` forward instead.
+`GuardState<TError>` is a `ref struct`. It cannot be stored in a field, boxed, captured in a closure, or held live across an `await` point. In practice this is rarely a real restriction — build and consume the chain in one statement (`Expect(...).And(...).OnFailure(...)`), and it works fine inside `async` methods, Unity coroutines, and anywhere else, as long as you don't try to stash a half-finished chain and resume it later. If you need to defer a decision across an async boundary, call `.Then()` first and carry the (heap-friendly) `Result<T, TError>` forward instead.
 
 `Or` and `Not` operate on the whole accumulated chain, not the single condition being written on that line — see the API reference above. Read the doc comments before relying on the specific error value they produce in a multi-condition chain.
 

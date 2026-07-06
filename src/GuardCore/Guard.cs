@@ -98,12 +98,6 @@ public readonly ref struct GuardState<TError>(TError error, bool isSuccess)
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public Result<Unit, TError> ToResult()
-    {
-        return IsSuccess ? Unit.Default : Error;
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void Deconstruct(out bool isSuccess, out TError error)
     {
         isSuccess = IsSuccess;
