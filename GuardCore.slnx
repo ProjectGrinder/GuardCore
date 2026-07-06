@@ -1,0 +1,8 @@
+<Solution>
+    <Folder Name="/src/">
+        <Project Path="src/GuardCore/GuardCore.csproj" />
+    </Folder>
+    <Folder Name="/tests/">
+        <Project Path="tests/GuardCore.Tests/GuardCore.Tests.csproj" />
+    </Folder>
+</Solution>

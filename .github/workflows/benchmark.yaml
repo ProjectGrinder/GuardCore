@@ -1,0 +1,89 @@
+name: Benchmark
+run-name: Benchmark(${{ inputs.config }})
+
+on:
+  workflow_dispatch:
+    inputs:
+      config:
+        type: choice
+        description: Specify benchmark config key
+        default: Default
+        options:
+          - Default
+          - Test
+          - TargetFrameworks
+      filter:
+        type: string
+        description: Specify benchmark filter text
+        default: '*'
+      framework:
+        type: choice
+        description: Specify target framework for benchmark
+        default: net10.0
+        options:
+          - net8.0
+          - net10.0
+
+jobs:
+  benchmark:
+    permissions:
+      contents: write
+    runs-on: ubuntu-24.04
+    timeout-minutes: 120
+    steps:
+      - uses: Cysharp/Actions/.github/actions/checkout@main
+      - uses: Cysharp/Actions/.github/actions/setup-dotnet@main
+        with:
+          dotnet-version: |
+            8.0.x
+            10.0.x
+
+      - run: dotnet build -c Release
+
+      - name: Run Benchmarks
+        working-directory: sandbox/Benchmark
+        run: dotnet run -c Release --framework ${FRAMEWORK} --no-build --no-launch-profile -- --filter "${FILTER}" -- ${CONFIG}
+        env:
+          FRAMEWORK: ${{ inputs.framework }}
+          FILTER: ${{ inputs.filter }}
+          CONFIG: ${{ inputs.config }}
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: BenchmarkDotNet.Artifacts
+          path: sandbox/Benchmark/BenchmarkDotNet.Artifacts/
+          if-no-files-found: error
+
+      - name: Output results to JobSummary
+        working-directory: sandbox/Benchmark
+        shell: pwsh
+        run: |
+          $items = Get-ChildItem "BenchmarkDotNet.Artifacts/results/*.md" | where Name -ne 'reports.md'
+          foreach($item in $items) {
+            $title = $item.Name.Replace('-report-console.md', '')
+            $content = Get-Content $item.FullName -Raw
+            $tableContent = $content.Substring($content.IndexOf('|')).Replace('<', '&lt;').Replace('>', '&gt;')
+
+            Write-Output ('## {0}' -f $title)  >> $env:GITHUB_STEP_SUMMARY
+            Write-Output $tableContent          >> $env:GITHUB_STEP_SUMMARY
+          }
+
+      # Dynamically determines repository paths using context values instead of hardcoding Cysharp
+      - name: Update README.md benchmark report link
+        if: ${{ github.ref_name == 'main' && inputs.config == 'Default' && inputs.filter == '*' }}
+        shell: pwsh
+        run: |
+          $PSNativeCommandUseErrorActionPreference = $true
+          $repoUrl = "https://github.com/${{ github.repository }}/actions/runs/"
+
+          $md = Get-Content README.md -Raw
+          $md = [regex]::Replace($md, $repoUrl + '([\d]+)', $repoUrl + '${{ github.run_id }}')
+          Set-Content -Path README.md -Value $md -Encoding utf8NoBOM
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          git add README.md
+          git commit -m 'ci: update benchmark report link'
+          git push

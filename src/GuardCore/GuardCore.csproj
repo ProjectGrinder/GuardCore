@@ -1,0 +1,50 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFrameworks>netstandard2.0;netstandard2.1;net8.0;net9.0;net10.0</TargetFrameworks>
+    <RootNamespace>GuardCore</RootNamespace>
+    <AssemblyName>GuardCore</AssemblyName>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <!-- 1701/1702: Summary references, 0436: PolySharp source conflicts, 9124: Ref struct checks -->
+    <NoWarn>$(NoWarn);1701;1702;9124;0436</NoWarn>
+    <LangVersion>14</LangVersion>
+    <AllowUnsafeBlocks>false</AllowUnsafeBlocks>
+    <IsPackable>true</IsPackable>
+    <PackageTags>validation;guard;guard-clause;result;functional;monad;zero-allocation</PackageTags>
+    <Description>Ultra-low-allocation guard rail validation and monadic result framework.</Description>
+  </PropertyGroup>
+
+  <!-- Generate reference assemblies for faster build compilation chains on older targets -->
+  <PropertyGroup Condition="$(TargetFramework.StartsWith(`netstandard`))">
+    <ProduceReferenceAssembly>true</ProduceReferenceAssembly>
+  </PropertyGroup>
+
+  <!-- Legacy .NET Standard 2.0 Backports -->
+  <ItemGroup Condition="$(TargetFramework) == 'netstandard2.0'">
+    <PackageReference Include="PolySharp" Version="1.15.0">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+    <PackageReference Include="System.Buffers" Version="4.6.1" />
+    <PackageReference Include="System.Memory" Version="4.6.3" />
+    <PackageReference Include="System.Runtime.CompilerServices.Unsafe" Version="6.1.2" />
+  </ItemGroup>
+
+  <!-- .NET Standard 2.1 Backports -->
+  <ItemGroup Condition="$(TargetFramework) == 'netstandard2.1'">
+    <PackageReference Include="PolySharp" Version="1.15.0">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+    <PackageReference Include="System.Runtime.CompilerServices.Unsafe" Version="6.1.2" />
+  </ItemGroup>
+
+  <!-- Global Usings optimized for performance utilities -->
+  <ItemGroup>
+    <Using Include="System.Runtime.CompilerServices" />
+    <Using Include="System.Runtime.InteropServices" />
+    <Using Include="System.ComponentModel" />
+  </ItemGroup>
+
+</Project>

@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Configuration>
+  <!-- Available Options: https://github.com/microsoft/codecoverage/blob/main/docs/configuration.md -->
+  <CoverageFileName>TestResults/coverage.cobertura.xml</CoverageFileName>
+  <Format>cobertura</Format>
+  <IncludeTestAssembly>false</IncludeTestAssembly>
+  <DeterministicReport>true</DeterministicReport>
+  <CollectFromChildProcesses>true</CollectFromChildProcesses>
+  <CodeCoverage>
+    <ModulePaths>
+      <Include>
+        <!-- Corrected to target your actual zero-allocation core engine library -->
+        <ModulePath>.*GuardCore.*\.dll$</ModulePath>
+      </Include>
+      <Exclude>
+        <!-- Exclude test runner DLLs -->
+        <ModulePath>.*Tests\.dll$</ModulePath>        
+
+        <!-- Exclude third party validation frameworks -->
+        <ModulePath>.*xunit.*\.dll$</ModulePath>
+        <ModulePath>.*Shouldly\.dll$</ModulePath>
+        <ModulePath>.*DiffEngine\.dll$</ModulePath>
+      </Exclude>
+    </ModulePaths>
+    <Attributes>
+      <Exclude>
+        <Attribute>^System\.CodeDom\.Compiler\.GeneratedCodeAttribute$</Attribute>
+        <!-- Excludes optimization-driven inlining checks if necessary -->
+        <Attribute>^System\.Runtime\.CompilerServices\.CompilerGeneratedAttribute$</Attribute>
+      </Exclude>
+    </Attributes>
+    <Sources>
+      <Exclude>
+        <Source>.*\\[^\\]*\.g\.cs</Source>
+      </Exclude>
+    </Sources>
+    <!-- Disabled because your stack-bound engine is written in pure managed C# -->
+    <EnableStaticNativeInstrumentation>False</EnableStaticNativeInstrumentation>
+    <EnableDynamicNativeInstrumentation>False</EnableDynamicNativeInstrumentation>
+  </CodeCoverage>
+</Configuration>

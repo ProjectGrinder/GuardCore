@@ -1,0 +1,98 @@
+name: Build-Debug
+
+on:
+  push:
+    branches:
+      - "main"
+    paths-ignore:
+      - README.md
+  pull_request:
+    branches:
+      - "main"
+
+jobs:
+  build-dotnet:
+    strategy:
+      matrix:
+        os: [ubuntu-24.04, windows-2025]
+    permissions:
+      contents: read
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 10
+    steps:
+      - uses: Cysharp/Actions/.github/actions/checkout@main
+      - uses: Cysharp/Actions/.github/actions/setup-dotnet@main
+        with:
+          dotnet-version: |
+            8.0.x
+            10.0.x
+      - run: dotnet build -c Release
+      - run: dotnet test -c Release --no-build
+      - run: dotnet pack -c Release --no-build -o $GITHUB_WORKSPACE/artifacts
+
+  check-codecov-token:
+    permissions:
+      contents: read
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    outputs:
+      run_codecoverage: ${{ steps.check-token.outputs.token_exists }}
+    steps:
+      - id: check-token
+        shell: pwsh
+        env:
+          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+        run: |
+          if(![string]::IsNullOrEmpty($env:CODECOV_TOKEN))
+          {
+            echo "token_exists=true"  >> $env:GITHUB_OUTPUT
+          }
+          else
+          {
+            echo "token_exists=false" >> $env:GITHUB_OUTPUT
+          }
+
+  code-coverage:
+    if: ${{ needs.check-codecov-token.outputs.run_codecoverage == 'true' }}
+    needs: check-codecov-token
+    permissions:
+      contents: read
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: Cysharp/Actions/.github/actions/checkout@main
+      - uses: Cysharp/Actions/.github/actions/setup-dotnet@main
+        with:
+          dotnet-version: |
+            10.0.x
+      - run: dotnet build -c Release
+
+      - name: Enable diagnostics
+        run: echo "COMPlus_EnableDiagnostics=1" >> $GITHUB_ENV
+
+      - name: Install `dotnet-coverage` tool
+        run: dotnet tool install -g dotnet-coverage
+
+      - name: Collect code coverage
+        shell: pwsh
+        working-directory: tests
+        run: |
+          $PSNativeCommandUseErrorActionPreference = $true
+          $sessionId = 'GuardCore' # Corrected session tag
+
+          dotnet coverage collect --session-id $sessionId --nologo --settings codecoverage.runsettings --server-mode --background
+          try
+          {
+            # Targets your actual test assembly runner natively
+            dotnet coverage connect $sessionId --nologo "dotnet test ../ -c Release --framework net10.0 --no-build"
+          }
+          finally
+          {
+            dotnet coverage shutdown $sessionId --nologo --timeout 60000
+          }
+
+      - uses: codecov/codecov-action@5a1091511ad55cbe89839c7260b706298ca349f7 # v5.5.1
+        with:
+          fail_ci_if_error: false
+          files: tests/TestResults/coverage.cobertura.xml
+          token: ${{ secrets.CODECOV_TOKEN }}
