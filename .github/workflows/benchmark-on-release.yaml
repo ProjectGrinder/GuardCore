@@ -1,70 +1,72 @@
-name: Build-Release
-
+name: Benchmark on release
+run-name: Start benchmarks on release (${{ github.ref_name }})
 on:
   workflow_dispatch:
-    inputs:
-      tag:
-        description: "tag: Git tag to create (e.g., 1.0.0)"
-        required: true
-      dry-run:
-        description: "dry-run: true will skip publishing to NuGet."
-        required: true
-        default: false
-        type: boolean
+  release:
+    types: [released]
 
 jobs:
-  build-and-publish:
+  benchmarks:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
     permissions:
-      contents: write
-      id-token: write # Mandatory for NuGet Trusted Publish (OIDC)
-    runs-on: ubuntu-latest
-    timeout-minutes: 15
-
+      actions: write
     steps:
-      - name: Checkout Source Tree
-        uses: actions/checkout@v7
-
-      - name: Setup .NET Environment
-        uses: actions/setup-dotnet@v5
+      - name: Invoke benchmark workflows
+        uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd # v8.0.0
         with:
-          dotnet-version: |
-            8.0.x
-            10.0.x
+          script: |
+            try {
+              // Define base options that shared between createWorkflowDispatch
+              const baseOptions = {
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                workflow_id: 'benchmark.yaml',
+                ref: '${{ github.ref_name }}'
+              }
 
-      - name: Compile Library (Release Configuration)
-        run: dotnet build -c Release -p:Version=${{ inputs.tag }}
+              // 1. Start `Default` benchmark
+              await github.rest.actions.createWorkflowDispatch({
+                ...baseOptions,
+                inputs: {
+                  config: 'Default',
+                }
+              })
 
-      - name: Verify Primitives Matrix
-        run: dotnet test -c Release --no-build
+              // 2. Start `NuGetVersions` benchmark (Compare latest 2 versions)
+              await github.rest.actions.createWorkflowDispatch({
+                ...baseOptions,
+                inputs: {
+                  config: 'NuGetVersions',
+                }
+              })
 
-      - name: Pack Production NuGet Package
-        run: dotnet pack -c Release -p:Version=${{ inputs.tag }} -o ./publish
+              // 3. Start `SystemLinq` benchmarks
+              await github.rest.actions.createWorkflowDispatch({
+                ...baseOptions,
+                inputs: {
+                  config: 'SystemLinq',
+                }
+              })
 
-      - name: Upload Build Artifacts
-        uses: actions/upload-artifact@v7
-        with:
-          name: nuget-package
-          path: ./publish/
-          retention-days: 7
+              // 4. Start `TargetFrameworks` benchmarks
+              await github.rest.actions.createWorkflowDispatch({
+                ...baseOptions,
+                inputs: {
+                  config: 'TargetFrameworks',
+                }
+              })
 
-      - name: Authenticate with NuGet via OIDC
-        if: ${{ !inputs.dry-run }}
-        uses: NuGet/login@v1
-        id: nuget_login
-        with:
-          user: ${{ secrets.NUGET_USER }}
-
-      - name: Push Package to NuGet Gallery
-        if: ${{ !inputs.dry-run }}
-        run: dotnet nuget push "./publish/*.nupkg" --skip-duplicate -s https://api.nuget.org/v3/index.json -k "${NUGET_KEY}"
-        env:
-          NUGET_KEY: ${{ steps.nuget_login.outputs.NUGET_API_KEY }}
-
-      - name: Generate GitHub Release Tags
-        if: ${{ !inputs.dry-run }}
-        uses: softprops/action-gh-release@v2
-        with:
-          tag_name: v${{ inputs.tag }}
-          name: Release v${{ inputs.tag }}
-          generate_release_notes: true
-          files: ./publish/*.nupkg
+              // 5. Start `Default` benchmarks on `main` branch to update README.md benchmark report link.
+              await github.rest.actions.createWorkflowDispatch({
+                ...baseOptions,
+                ref: 'main',
+                inputs: {
+                  config: 'Default',
+                }
+              })
+            }
+            catch(error) {
+              console.error(error)
+              core.setFailed(error)
+            }
