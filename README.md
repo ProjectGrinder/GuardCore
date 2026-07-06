@@ -1,6 +1,6 @@
 GuardCore
 ===
-[![NuGet](https://img.shields.io/nuget/v/Takayama.GuardCore)](https://www.nuget.org/packages/Takayama.GuardCore)
+[![NuGet](https://img.shields.io/nuget/v/GuardCore)](https://www.nuget.org/packages/GuardCore)
 
 Zero-allocation guard clauses and railway-oriented `Result` handling for .NET and Unity, built for hot paths where exceptions and heap allocation are not an option.
 
