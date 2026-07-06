@@ -7,12 +7,12 @@ Zero-allocation guard clauses and railway-oriented `Result` handling for .NET an
 Unlike general-purpose Result libraries, GuardCore is intentionally narrow: `GuardState<TError>` is a `ref struct` that never leaves the stack, and errors are `Enum` values instead of heap-allocated objects or strings. The tradeoff is deliberate — this is not a drop-in replacement for FluentResults or ErrorOr, it's a genuinely free (zero-GC) alternative for the slice of C# that can't afford what those libraries cost: game loops, editor tooling, real-time/embedded code, and anywhere a `Debug.Log` + silent `return false` was doing the job of an exception without any of the safety.
 
 ```bash
-dotnet add package Takayama.GuardCore
+dotnet add package GuardCore
 ```
 
 ```csharp
-using Takayama.GuardCore;
-using static Takayama.GuardCore.Guard;
+using GuardCore;
+using static GuardCore.Guard;
 
 var guard = Expect(user != null, UserError.NotFound)
     .And(user.IsActive, UserError.Deactivated)
@@ -71,7 +71,7 @@ If nothing ever reads `.Value` or `.Error` after the check, you don't need `Resu
 
 Getting Started
 ---
-Install from [NuGet](https://www.nuget.org/packages/Takayama.GuardCore), define your error enum, and chain checks with `Expect`/`And`/`Or`/`Not`.
+Install from [NuGet](https://www.nuget.org/packages/GuardCore), define your error enum, and chain checks with `Expect`/`And`/`Or`/`Not`.
 
 ```csharp
 public enum ValidationError { None, NullInput, OutOfRange, Empty }
