@@ -1,4 +1,4 @@
-﻿namespace GuardCore;
+﻿namespace Takayama.GuardCore;
 
 /// <summary>
 /// Transforms the inner error type if the result is a failure.

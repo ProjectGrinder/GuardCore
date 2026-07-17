@@ -1,4 +1,4 @@
-﻿namespace GuardCore;
+﻿namespace Takayama.GuardCore;
 
 public readonly struct Result<TValue, TError> where TError : Enum
 {

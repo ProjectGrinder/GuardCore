@@ -1,4 +1,4 @@
-﻿namespace GuardCore.Tests;
+﻿namespace Takayama.GuardCore.Tests;
 
 public enum TestError
 {

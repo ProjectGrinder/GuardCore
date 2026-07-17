@@ -1,4 +1,4 @@
-﻿namespace GuardCore.Tests;
+﻿namespace Takayama.GuardCore.Tests;
 
 public class ResultExtensionsTests
 {
@@ -7,8 +7,8 @@ public class ResultExtensionsTests
     {
         Result<string, TestError> failureResult = TestError.ValueTooHigh;
         Result<string, AlternateError> transformed = failureResult.MapError(err =>
-            err == TestError.ValueTooHigh 
-                ? AlternateError.TranslatedFault 
+            err == TestError.ValueTooHigh
+                ? AlternateError.TranslatedFault
                 : AlternateError.None);
 
         transformed.Failed.ShouldBeTrue();
