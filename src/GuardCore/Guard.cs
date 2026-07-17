@@ -1,4 +1,4 @@
-﻿namespace GuardCore;
+﻿namespace Takayama.GuardCore;
 
 public static class Guard
 {

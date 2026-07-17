@@ -42,7 +42,7 @@
   <ItemGroup>
     <Using Include="Xunit" />
     <Using Include="Shouldly" />
-    <Using Include="GuardCore" />
+    <Using Include="Takayama.GuardCore" />
     <Using Include="System.Runtime.CompilerServices" />
   </ItemGroup>
 

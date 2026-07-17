@@ -5,8 +5,8 @@
 
   <PropertyGroup>
     <TargetFrameworks>netstandard2.0;netstandard2.1;net8.0;net9.0;net10.0</TargetFrameworks>
-    <RootNamespace>GuardCore</RootNamespace>
-    <AssemblyName>GuardCore</AssemblyName>
+    <RootNamespace>Takayama.GuardCore</RootNamespace>
+    <AssemblyName>Takayama.GuardCore</AssemblyName>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <!-- 1701/1702: Summary references, 0436: PolySharp source conflicts, 9124: Ref struct checks -->

@@ -1,4 +1,4 @@
-﻿namespace GuardCore
+﻿namespace Takayama.GuardCore
 {
     /// <summary>
     /// Represents a type with only one value. 
